@@ -1,0 +1,30 @@
+[package]
+name = "serde-metaform"
+version = "1.0.0"
+edition = "2024"
+authors = ["Victor <victorayo206@example.com>"]
+
+description = "Form encoder for Meta (Facebook/WhatsApp/Graph API) batch requests. Serializes values to JSON then URL-encodes them, matching Meta’s quirky request body format."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/veecore/serde-metaform"
+documentation = "https://docs.rs/serde-metaform"
+readme = "README.md"
+keywords = ["meta", "facebook", "whatsapp", "graph-api", "form"]
+categories = ["web-programming::http-client", "encoding"]
+exclude = [".github", "benches"]
+
+[dependencies]
+serde = { version = "*", default-features = false }
+percent-encoding = "*"
+paste = "*"
+json-escape = "0.3.0"
+itoa = "1.0.15"
+ryu = "1.0.20"
+
+[dev-dependencies]
+criterion = "0.5"
+serde_json = { version = "1.0.145", features = ["raw_value"] }
+
+[[bench]]
+name = "comparison"
+harness = false
