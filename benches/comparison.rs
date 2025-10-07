@@ -79,9 +79,9 @@ pub fn encode_request_body_from_value(
             &serde_json::to_string(value)?
         };
 
-        result.push_str(&key);
+        result.push_str(key);
         result.push('=');
-        result.extend(utf8_percent_encode(&val, FORM_URLENCODING_ENCODE_SET));
+        result.extend(utf8_percent_encode(val, FORM_URLENCODING_ENCODE_SET));
     }
 
     Ok(result)
