@@ -125,9 +125,9 @@ This crate eliminates that two-step process.
 
 | Benchmark       | Description                         | Mean Time   | Relative         |
 | --------------- | ----------------------------------- | ----------- | ---------------- |
-| `json_pipeline` | struct → JSON → form (old pipeline) | **25.0 µs** | 1.00×            |
-| `from_bytes`    | JSON → form (transcoder only)       | **18.0 µs** | 1.39× faster     |
-| `from_struct`   | struct → form (`serde_metaform`)    | **15.1 µs** | **1.65× faster** |
+| `json_value`    | struct → JSON Value → form          | **35.5 µs** | 1.00×            |
+| `json_pipeline` | struct → Bytes → form (old pipeline)| **23.6 µs** | 1.5× faster     |
+| `from_struct`   | struct → form (`serde_metaform`)    | **14.0 µs** | **2.53× faster** |
 
 > Real-world WhatsApp payloads typically gain **35–45 %** throughput improvement.
 

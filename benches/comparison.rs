@@ -56,6 +56,37 @@ impl<'de> Visitor<'de> for FormVisitor {
     }
 }
 
+pub fn encode_request_body_from_value(
+    value: &serde_json::Value,
+) -> Result<String, serde_json::Error> {
+    let map = if let Some(map) = value.as_object() {
+        map
+    } else {
+        return Err(serde_json::Error::custom("value must be an object"));
+    };
+
+    let mut result = String::with_capacity(map.len() * 20);
+    for (key, value) in map {
+        if !result.is_empty() {
+            result.push('&');
+        }
+
+        let val = if let Some(s) = value.as_str() {
+            // no unescaping needed
+            s
+        } else {
+            // Now we need to json-fy whatever we have here
+            &serde_json::to_string(value)?
+        };
+
+        result.push_str(&key);
+        result.push('=');
+        result.extend(utf8_percent_encode(&val, FORM_URLENCODING_ENCODE_SET));
+    }
+
+    Ok(result)
+}
+
 // --- Struct definitions for the typed benchmark ---
 
 #[derive(Serialize)]
@@ -177,31 +208,31 @@ pub fn bench_encoding(c: &mut Criterion) {
         },
     };
 
-    // 1. Raw byte slice of JSON, for the transcoding benchmark
-    let input_bytes = serde_json::to_vec(&message).unwrap();
-
     // --- Benchmarks ---
 
-    // Benchmark 1: The real path used in whatsapp-business-rs.
-    group.bench_function("json_pipeline (struct -> json -> form)", |b| {
+    // Benchmark 1: From struct to transcoding from a raw JSON byte slice.
+    // This simulates having JSON data that needs to be converted.
+    // It's efficient for what it does but includes JSON serialization &
+    // parsing overhead.
+    group.bench_function("from_bytes (struct -> json_bytes -> form)", |b| {
         b.iter(|| {
             let json_bytes = serde_json::to_vec(black_box(&message)).unwrap();
             encode_request_body_from_bytes(black_box(&json_bytes)).unwrap();
         });
     });
 
-    // Benchmark 2: Transcoding from a raw JSON byte slice.
-    // This simulates having JSON data that needs to be converted.
-    // It's efficient for what it does but includes JSON parsing overhead.
-    group.bench_function("from_bytes (json -> form)", |b| {
+    // Benchmark 2: Like 1 but from struct to serde_json::Value instead of
+    // raw JSON byte slice.
+    group.bench_function("from_value (struct -> json_value -> form)", |b| {
         b.iter(|| {
-            encode_request_body_from_bytes(black_box(&input_bytes)).unwrap();
+            let json_value = serde_json::to_value(&message).unwrap();
+            encode_request_body_from_value(black_box(&json_value)).unwrap();
         });
     });
 
     // Benchmark 3: Direct serialization from a typed struct.
     // This is the primary, intended use case for serde_metaform.
-    // It should be much faster as it avoids parsing text.
+    // It should be much faster as it avoids any form of parsing.
     group.bench_function("from_struct (serde_metaform)", |b| {
         b.iter(|| {
             serde_metaform::to_string(black_box(&message)).unwrap();
