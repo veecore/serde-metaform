@@ -14,9 +14,9 @@ categories = ["web-programming::http-client", "encoding"]
 exclude = [".github", "benches"]
 
 [dependencies]
-serde = { version = "*", default-features = false, features = ["std"] }
-percent-encoding = "*"
-paste = "*"
+serde = { version = "1", default-features = false, features = ["std"] }
+percent-encoding = "2.3.2"
+paste = "1.0.15"
 json-escape = "0.3.0"
 itoa = "1.0.15"
 ryu = "1.0.20"
