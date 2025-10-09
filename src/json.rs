@@ -627,7 +627,7 @@ mod tests {
     use std::collections::{BTreeMap, HashMap};
 
     fn to_string<T: Serialize>(value: &T) -> Result<String, Error> {
-        let mut buf = String::new();
+        let mut buf = String::with_capacity(128);
         let writer = PercentEncoding::new(&mut buf);
         let serializer = JsonSerializer {
             output: writer,

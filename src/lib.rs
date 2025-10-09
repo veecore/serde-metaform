@@ -378,6 +378,7 @@ impl<W: Write> serde::Serializer for Serializer<W> {
     }
 }
 
+#[doc(hidden)]
 pub type MapSerializer<W> = Serializer<W>;
 
 impl<W: Write> serde::ser::SerializeMap for MapSerializer<W> {
@@ -420,6 +421,7 @@ impl<W: Write> serde::ser::SerializeMap for MapSerializer<W> {
     }
 }
 
+#[doc(hidden)]
 pub type StructSerializer<W> = Serializer<W>;
 
 impl<W: Write> serde::ser::SerializeStruct for StructSerializer<W> {
@@ -442,6 +444,7 @@ impl<W: Write> serde::ser::SerializeStruct for StructSerializer<W> {
     }
 }
 
+#[doc(hidden)]
 pub struct TupleVariantSerializer<W: Write> {
     inner: json::SeqSerializer<PercentEncoding<W>>,
 }
@@ -470,6 +473,7 @@ impl<W: Write> serde::ser::SerializeTupleVariant for TupleVariantSerializer<W> {
     }
 }
 
+#[doc(hidden)]
 pub struct StructVariantSerializer<W: Write> {
     inner: json::StructSerializer<PercentEncoding<W>>,
 }
@@ -496,6 +500,21 @@ impl<W: Write> serde::ser::SerializeStructVariant for StructVariantSerializer<W>
         use serde::ser::SerializeStruct as _;
 
         self.inner.end()
+    }
+}
+
+#[inline]
+#[doc(hidden)]
+pub fn percent_encoded_write<W: Write>(w: W) -> impl std::io::Write {
+    PercentEncoding::new(w)
+}
+
+#[inline]
+#[doc(hidden)]
+pub fn internal_json_percent_encoded<W: Write>(w: W) -> impl serde::Serializer {
+    JsonSerializer {
+        output: PercentEncoding::new(w),
+        is_top_level_value: false,
     }
 }
 

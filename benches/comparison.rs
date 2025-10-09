@@ -242,5 +242,99 @@ pub fn bench_encoding(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_encoding);
+pub fn crate_json_to_string_percent_encoded<T: Serialize>(value: &T) -> String {
+    let mut buf = String::with_capacity(128);
+    let serializer = serde_metaform::internal_json_percent_encoded(&mut buf);
+    value.serialize(serializer).unwrap();
+    buf
+}
+
+pub fn serde_json_to_string_percent_encoded<T: Serialize>(value: &T) -> String {
+    let mut buf = String::with_capacity(128);
+    let writer = serde_metaform::percent_encoded_write(&mut buf);
+    serde_json::to_writer(writer, value).unwrap();
+    buf
+}
+
+pub fn bench_json_serializing(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Json Serialization Comparison");
+
+    // --- Benchmark Data ---
+
+    // Typed struct, for the direct serialization benchmark
+    let message = Message {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: "phone_number",
+        message_type: "interactive",
+        interactive: Interactive {
+            interactive_type: "list",
+            header: Header {
+                header_type: "text",
+                text: "<HEADER_TEXT>",
+            },
+            body: Body {
+                text: "<BODY_TEXT>",
+            },
+            footer: Footer {
+                text: "<FOOTER_TEXT>",
+            },
+            action: Action {
+                button: "<BUTTON_TEXT>",
+                sections: vec![
+                    Section {
+                        title: "<LIST_SECTION_1_TITLE>",
+                        rows: vec![
+                            Row {
+                                id: "<LIST_SECTION_1_ROW_1_ID>",
+                                title: "<SECTION_1_ROW_1_TITLE>",
+                                description: "<SECTION_1_ROW_1_DESC>",
+                            },
+                            Row {
+                                id: "<LIST_SECTION_1_ROW_2_ID>",
+                                title: "<SECTION_1_ROW_2_TITLE>",
+                                description: "<SECTION_1_ROW_2_DESC>",
+                            },
+                        ],
+                    },
+                    Section {
+                        title: "<LIST_SECTION_2_TITLE>",
+                        rows: vec![
+                            Row {
+                                id: "<LIST_SECTION_2_ROW_1_ID>",
+                                title: "<SECTION_2_ROW_1_TITLE>",
+                                description: "<SECTION_2_ROW_1_DESC>",
+                            },
+                            Row {
+                                id: "<LIST_SECTION_2_ROW_2_ID>",
+                                title: "<SECTION_2_ROW_2_TITLE>",
+                                description: "<SECTION_2_ROW_2_DESC>",
+                            },
+                        ],
+                    },
+                ],
+            },
+        },
+    };
+
+    // --- Benchmarks ---
+
+    group.bench_function("serde_json", |b| {
+        b.iter(|| {
+            let _ = serde_json_to_string_percent_encoded(black_box(&message));
+        });
+    });
+
+    // This is a bit more optimized for the domain by avoiding some unnecessary percent-
+    // encoding. A fairer bench would require implementing serde_json's Formatter to avoid
+    // some percent-encoding, but this is stressful.
+    group.bench_function("crate::json", |b| {
+        b.iter(|| {
+            let _ = crate_json_to_string_percent_encoded(&message);
+        });
+    });
+
+    group.finish();
+}
+criterion_group!(benches, bench_encoding, bench_json_serializing);
 criterion_main!(benches);
